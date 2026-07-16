@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { ThemeProvider } from '@/lib/theme'
 
 export const metadata: Metadata = {
-  title: 'Flirt Wingman',
+  title: 'Flirt Wingman | 撩妹助手',
   description: 'AI-powered flirting assistant',
 }
 
@@ -13,7 +14,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-CN">
-      <body>{children}</body>
+      <body>
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   )
 }
