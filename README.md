@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Flirt Wingman 撩妹助手
 
-## Getting Started
+AI 驱动的聊天助手，帮你生成高情商回复。
 
-First, run the development server:
+## 功能
 
+- 粘贴聊天记录，AI 分析对话
+- 5 种风格选择：撩、逗、冲、暖、酷
+- 生成多个回复选项
+- 一键复制 / QR 码传送到手机
+- 聊天历史记录
+- 双主题切换
+- 中英文支持
+
+## 前置要求
+
+1. 安装 [Ollama](https://ollama.ai)
+2. 下载 Qwen 模型：
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+ollama pull qwen2.5:7b
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 安装
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+git clone <your-repo>
+cd flirt-wingman
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+访问 http://localhost:3000
 
-## Learn More
+## 使用方法
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. 确保 Ollama 正在运行
+2. 选择聊天风格
+3. 粘贴聊天记录
+4. 点击「生成回复」
+5. 复制喜欢的回复，或扫描 QR 码到手机
