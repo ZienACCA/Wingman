@@ -33,9 +33,12 @@ export function ChatInput({ messages, onMessagesChange, isLoading, language, rep
       role: role === 'her' ? 'girl' : 'user',
       text: '',
       timestamp: Date.now(),
+      replyToId: replyTo?.id,
+      replyToText: replyTo?.text,
     }
     onMessagesChange([...messages, newMsg])
     setEditingId(newMsg.id)
+    setReplyTo(null)
   }
 
   const updateMessage = (id: string, text: string) => {
