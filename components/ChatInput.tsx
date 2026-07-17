@@ -19,6 +19,8 @@ export function ChatInput({ messages, onMessagesChange, isLoading, language, rep
   const [editingId, setEditingId] = useState<string | null>(null)
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; message: ChatMessage } | null>(null)
+  const [swipeStart, setSwipeStart] = useState<{ x: number; messageId: string } | null>(null)
+  const [swipeDelta, setSwipeDelta] = useState(0)
   const chatEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -50,6 +52,25 @@ export function ChatInput({ messages, onMessagesChange, isLoading, language, rep
     e.preventDefault()
     e.stopPropagation()
     setContextMenu({ x: e.clientX, y: e.clientY, message: msg })
+  }
+
+  const handleSwipeStart = (e: React.PointerEvent, msgId: string) => {
+    setSwipeStart({ x: e.clientX, messageId: msgId })
+  }
+
+  const handleSwipeMove = (e: React.PointerEvent) => {
+    if (!swipeStart) return
+    const delta = e.clientX - swipeStart.x
+    if (delta > 0) setSwipeDelta(delta)
+  }
+
+  const handleSwipeEnd = () => {
+    if (swipeStart && swipeDelta > 80) {
+      const msg = messages.find(m => m.id === swipeStart.messageId)
+      if (msg) setReplyTo(msg)
+    }
+    setSwipeStart(null)
+    setSwipeDelta(0)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent, id: string) => {
@@ -95,6 +116,10 @@ export function ChatInput({ messages, onMessagesChange, isLoading, language, rep
             <div
               key={msg.id}
               className={`flex ${isHer ? 'justify-start' : 'justify-end'} group`}
+              onPointerDown={(e) => handleSwipeStart(e, msg.id)}
+              onPointerMove={handleSwipeMove}
+              onPointerUp={handleSwipeEnd}
+              onPointerLeave={handleSwipeEnd}
             >
               {/* Reply icon on hover */}
               <button
@@ -115,9 +140,20 @@ export function ChatInput({ messages, onMessagesChange, isLoading, language, rep
                     ? 'bg-[#202c33] text-white rounded-tl-none'
                     : 'bg-[#005c4b] text-white rounded-tr-none'
                 } ${isEditing ? 'ring-1 ring-[#00a884]' : ''}`}
+                style={swipeStart?.messageId === msg.id && swipeDelta > 0
+                  ? { transform: `translateX(${Math.min(swipeDelta * 0.5, 40)}px)` }
+                  : undefined}
                 onClick={() => setEditingId(msg.id)}
                 onContextMenu={(e) => handleContextMenu(e, msg)}
               >
+                {swipeStart?.messageId === msg.id && swipeDelta > 20 && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-8 text-[#00a884]">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M9 17l-5-5 5-5" />
+                      <path d="M4 12h11a4 4 0 0 1 0 8h-1" />
+                    </svg>
+                  </div>
+                )}
                 {isEditing ? (
                   <textarea
                     autoFocus
