@@ -89,6 +89,19 @@ export function ChatInput({ messages, onMessagesChange, isLoading, language, rep
               key={msg.id}
               className={`flex ${isHer ? 'justify-start' : 'justify-end'} group`}
             >
+              {/* Reply icon on hover */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setReplyTo(msg)
+                }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity self-center text-[#8696a0] hover:text-white"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 17l-5-5 5-5" />
+                  <path d="M4 12h11a4 4 0 0 1 0 8h-1" />
+                </svg>
+              </button>
               <div
                 className={`relative max-w-[75%] px-3 py-2 rounded-lg cursor-pointer transition-all ${
                   isHer
