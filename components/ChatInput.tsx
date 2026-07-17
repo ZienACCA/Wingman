@@ -207,6 +207,28 @@ export function ChatInput({ messages, onMessagesChange, isLoading, language, rep
         <div ref={chatEndRef} />
       </div>
 
+      {/* Reply preview */}
+      {replyTo && (
+        <div className="px-4 py-2 bg-[#1a2830] border-t border-[#313d45] flex items-center gap-2">
+          <button
+            onClick={cancelReply}
+            className="text-[#8696a0] hover:text-white transition-colors"
+          >
+            ✕
+          </button>
+          <div className="flex-1 min-w-0">
+            <div className="text-[#00a884] text-xs font-medium">
+              {language === 'en'
+                ? (gender === 'male' ? 'She' : 'He')
+                : (gender === 'male' ? '她' : '他')}
+            </div>
+            <div className="text-[#8696a0] text-xs truncate">
+              {replyTo.text || t(language, 'emptyChat')}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add message buttons */}
       <div className="px-4 py-2 bg-[#202c33] flex gap-2 border-t border-[#313d45]">
         <button
