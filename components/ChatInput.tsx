@@ -18,6 +18,7 @@ interface ChatInputProps {
 export function ChatInput({ messages, onMessagesChange, isLoading, language, replies, onReplyClick, analysis, gender }: ChatInputProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null)
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; message: ChatMessage } | null>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -44,6 +45,12 @@ export function ChatInput({ messages, onMessagesChange, isLoading, language, rep
   }
 
   const cancelReply = () => setReplyTo(null)
+
+  const handleContextMenu = (e: React.MouseEvent, msg: ChatMessage) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setContextMenu({ x: e.clientX, y: e.clientY, message: msg })
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent, id: string) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -109,6 +116,7 @@ export function ChatInput({ messages, onMessagesChange, isLoading, language, rep
                     : 'bg-[#005c4b] text-white rounded-tr-none'
                 } ${isEditing ? 'ring-1 ring-[#00a884]' : ''}`}
                 onClick={() => setEditingId(msg.id)}
+                onContextMenu={(e) => handleContextMenu(e, msg)}
               >
                 {isEditing ? (
                   <textarea
@@ -159,6 +167,30 @@ export function ChatInput({ messages, onMessagesChange, isLoading, language, rep
             </div>
           )
         })}
+
+        {/* Context menu */}
+        {contextMenu && (
+          <>
+            <div
+              className="fixed inset-0 z-50"
+              onClick={() => setContextMenu(null)}
+            />
+            <div
+              className="fixed z-50 bg-[#233146] rounded-lg shadow-lg border border-[#313d45] py-1 min-w-[120px]"
+              style={{ left: contextMenu.x, top: contextMenu.y }}
+            >
+              <button
+                onClick={() => {
+                  setReplyTo(contextMenu.message)
+                  setContextMenu(null)
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-[#d1d7db] hover:bg-[#2a3942] transition-colors"
+              >
+                {t(language, 'reply')}
+              </button>
+            </div>
+          </>
+        )}
 
         {/* AI reply suggestions grouped by message */}
         {replies.length > 0 && (() => {
