@@ -184,9 +184,21 @@ export function ChatInput({ messages, onMessagesChange, isLoading, language, rep
                     }}
                   />
                 ) : (
-                  <span className="whitespace-pre-wrap break-words text-sm">
-                    {msg.text || (isHer ? addMsgLabel(language, gender, 'her') : addMsgLabel(language, gender, 'my'))}
-                  </span>
+                  <>
+                    {msg.replyToText && (
+                      <div className="border-l-2 border-[#00a884] pl-2 mb-1">
+                        <div className="text-[#8696a0] text-xs">
+                          {msg.role === 'girl'
+                            ? (gender === 'male' ? '她' : '他')
+                            : (gender === 'male' ? '我' : '我')}
+                          : {msg.replyToText}
+                        </div>
+                      </div>
+                    )}
+                    <span className="whitespace-pre-wrap break-words text-sm">
+                      {msg.text || (isHer ? addMsgLabel(language, gender, 'her') : addMsgLabel(language, gender, 'my'))}
+                    </span>
+                  </>
                 )}
 
                 {/* Delete button */}
