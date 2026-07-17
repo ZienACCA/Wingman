@@ -2,13 +2,15 @@
 
 import { useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
-import { ReplyOption } from '@/types'
+import { ReplyOption, Language } from '@/types'
+import { t } from '@/lib/i18n'
 
 interface ReplyCardsProps {
   replies: ReplyOption[]
+  language: Language
 }
 
-export function ReplyCards({ replies }: ReplyCardsProps) {
+export function ReplyCards({ replies, language }: ReplyCardsProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [showQR, setShowQR] = useState<string | null>(null)
 
@@ -19,31 +21,33 @@ export function ReplyCards({ replies }: ReplyCardsProps) {
   }
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-bold text-center">选择一个回复：</h3>
+    <div className="space-y-3">
+      <h3 className="text-sm font-bold text-[#00a884] text-center">
+        {t(language, 'selectReply')}
+      </h3>
       {replies.map((reply) => (
         <div
           key={reply.id}
-          className="p-4 bg-white rounded-2xl shadow-md hover:shadow-lg transition-all"
+          className="p-3 bg-[#202c33] rounded-lg"
         >
-          <p className="text-gray-800 mb-3">{reply.text}</p>
+          <p className="text-[#e9edef] text-sm mb-3">{reply.text}</p>
           <div className="flex gap-2">
             <button
               onClick={() => handleCopy(reply)}
-              className="flex-1 py-2 bg-pink-100 text-pink-600 rounded-xl font-medium hover:bg-pink-200 transition-colors"
+              className="flex-1 py-1.5 bg-[#005c4b] text-white rounded-lg text-sm font-medium hover:bg-[#007a5c] transition-colors"
             >
-              {copiedId === reply.id ? '已复制 ✓' : '复制'}
+              {copiedId === reply.id ? t(language, 'copied') : t(language, 'copy')}
             </button>
             <button
               onClick={() => setShowQR(showQR === reply.id ? null : reply.id)}
-              className="py-2 px-4 bg-purple-100 text-purple-600 rounded-xl font-medium hover:bg-purple-200 transition-colors"
+              className="py-1.5 px-4 bg-[#2a3942] text-[#d1d7db] rounded-lg text-sm font-medium hover:bg-[#3b4d57] transition-colors"
             >
-              QR
+              {t(language, 'qr')}
             </button>
           </div>
           {showQR === reply.id && (
-            <div className="mt-3 flex justify-center p-4 bg-white rounded-xl">
-              <QRCodeSVG value={reply.text} size={150} />
+            <div className="mt-3 flex justify-center p-3 bg-white rounded-lg">
+              <QRCodeSVG value={reply.text} size={120} />
             </div>
           )}
         </div>

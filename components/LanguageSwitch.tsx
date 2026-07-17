@@ -9,19 +9,19 @@ interface LanguageSwitchProps {
 
 export function LanguageSwitch({ language, onLanguageChange }: LanguageSwitchProps) {
   return (
-    <div className="flex gap-1 bg-white/80 rounded-xl p-1">
+    <div className="flex gap-1 bg-[#2a3942] rounded-lg p-1">
       <button
         onClick={() => onLanguageChange('zh')}
-        className={`px-3 py-1 rounded-lg text-sm transition-all ${
-          language === 'zh' ? 'bg-pink-500 text-white' : 'text-gray-600'
+        className={`px-2 py-1 rounded text-xs transition-all ${
+          language === 'zh' ? 'bg-[#00a884] text-white' : 'text-[#8696a0] hover:text-white'
         }`}
       >
         中文
       </button>
       <button
         onClick={() => onLanguageChange('en')}
-        className={`px-3 py-1 rounded-lg text-sm transition-all ${
-          language === 'en' ? 'bg-pink-500 text-white' : 'text-gray-600'
+        className={`px-2 py-1 rounded text-xs transition-all ${
+          language === 'en' ? 'bg-[#00a884] text-white' : 'text-[#8696a0] hover:text-white'
         }`}
       >
         EN

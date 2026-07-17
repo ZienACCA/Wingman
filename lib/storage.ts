@@ -1,14 +1,14 @@
-import { Conversation } from '@/types'
+import { Session } from '@/types'
 
-const STORAGE_KEY = 'flirt-wingman-history'
+const STORAGE_KEY = 'flirt-wingman-sessions'
 
-export function getHistory(): Conversation[] {
+export function getHistory(): Session[] {
   if (typeof window === 'undefined') return []
   const data = localStorage.getItem(STORAGE_KEY)
   return data ? JSON.parse(data) : []
 }
 
-export function saveConversation(conv: Conversation): void {
+export function saveConversation(conv: Session): void {
   const history = getHistory()
   history.unshift(conv)
   localStorage.setItem(STORAGE_KEY, JSON.stringify(history.slice(0, 50)))
