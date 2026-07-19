@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434'
+const OCR_VISION_MODEL = process.env.OCR_VISION_MODEL || 'llava'
+const OCR_PARSE_MODEL = process.env.OCR_PARSE_MODEL || 'qwen2.5'
 const MAX_IMAGE_SIZE = 20 * 1024 * 1024 // 20MB
 
 const OCR_PROMPT = `You are a text extraction expert. Extract ALL visible text from this WhatsApp chat screenshot. Output EXACTLY the text as shown, preserving order from top to bottom. Do NOT add commentary, descriptions, or interpretations. Just output the raw text lines.`
@@ -52,6 +54,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No image provided' }, { status: 400 })
     }
 
+    if (typeof image !== 'string') {
+      return NextResponse.json(
+        { error: 'Image must be a base64 string' },
+        { status: 400 }
+      )
+    }
+
     // Validate base64 image size (rough check: base64 is ~33% larger than raw)
     const imageSizeBytes = Math.ceil((image.length * 3) / 4)
     if (imageSizeBytes > MAX_IMAGE_SIZE) {
@@ -70,7 +79,7 @@ export async function POST(request: NextRequest) {
           images: [image],
         },
       ],
-      'llava'
+      OCR_VISION_MODEL
     )
 
     if (!ocrText.trim()) {
@@ -85,7 +94,7 @@ export async function POST(request: NextRequest) {
           content: buildParsePrompt(ocrText),
         },
       ],
-      'qwen2.5'
+      OCR_PARSE_MODEL
     )
 
     // Parse JSON from response (handle potential markdown code blocks)
@@ -95,7 +104,30 @@ export async function POST(request: NextRequest) {
       jsonStr = jsonMatch[1].trim()
     }
 
-    const messages: ExtractedMessage[] = JSON.parse(jsonStr)
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(jsonStr)
+    } catch {
+      return NextResponse.json(
+        { error: 'Failed to parse model response as JSON', raw: jsonStr },
+        { status: 500 }
+      )
+    }
+
+    if (!Array.isArray(parsed) || !parsed.every(
+      (m): m is ExtractedMessage =>
+        typeof m === 'object' &&
+        m !== null &&
+        typeof (m as ExtractedMessage).sender === 'string' &&
+        typeof (m as ExtractedMessage).text === 'string'
+    )) {
+      return NextResponse.json(
+        { error: 'Model returned invalid message format', raw: jsonStr },
+        { status: 500 }
+      )
+    }
+
+    const messages: ExtractedMessage[] = parsed
 
     return NextResponse.json({ messages })
   } catch (error) {
