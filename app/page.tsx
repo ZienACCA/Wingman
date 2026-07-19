@@ -320,6 +320,7 @@ export default function Home() {
                 onReplyClick={handleReplyClick}
                 analysis={currentAnalysis || null}
                 gender={activeSession.gender}
+                sessionName={activeSession.name}
               />
             </div>
 

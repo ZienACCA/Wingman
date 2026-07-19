@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { ChatMessage, ReplyOption, Language, AgentAnalysis, Gender } from '@/types'
 import { t, translateAnalysis, addMsgLabel } from '@/lib/i18n'
+import { ScreenshotReviewModal } from './ScreenshotReviewModal'
 
 interface ChatInputProps {
   messages: ChatMessage[]
@@ -13,15 +14,29 @@ interface ChatInputProps {
   onReplyClick: (text: string, messageId: string, replyToId?: string, replyToText?: string) => void
   analysis: AgentAnalysis | null
   gender: Gender
+  sessionName?: string
 }
 
-export function ChatInput({ messages, onMessagesChange, isLoading, language, replies, onReplyClick, analysis, gender }: ChatInputProps) {
+const SELF_IDENTIFIERS = ['我', 'Me', 'me', 'My', 'my', 'I', 'i']
+
+function mapSenderToRole(sender: string, sessionName?: string): 'user' | 'girl' {
+  const normalized = sender.trim()
+  if (sessionName && normalized === sessionName) return 'girl'
+  if (SELF_IDENTIFIERS.some(id => normalized === id || normalized.startsWith(id + ' '))) return 'user'
+  return 'girl'
+}
+
+export function ChatInput({ messages, onMessagesChange, isLoading, language, replies, onReplyClick, analysis, gender, sessionName }: ChatInputProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; message: ChatMessage } | null>(null)
   const [swipeStart, setSwipeStart] = useState<{ x: number; messageId: string } | null>(null)
   const [swipeDelta, setSwipeDelta] = useState(0)
+  const [showUploadModal, setShowUploadModal] = useState(false)
+  const [ocrMessages, setOcrMessages] = useState<{ sender: string; text: string }[]>([])
+  const [isUploading, setIsUploading] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -81,6 +96,57 @@ export function ChatInput({ messages, onMessagesChange, isLoading, language, rep
       e.preventDefault()
       setEditingId(null)
     }
+  }
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          const result = reader.result as string
+          const data = result.split(',')[1]
+          resolve(data)
+        }
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+
+      const res = await fetch('/api/ocr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64 }),
+      })
+
+      if (!res.ok) {
+        throw new Error('OCR failed')
+      }
+
+      const data = await res.json()
+      setOcrMessages(data.messages || [])
+      setShowUploadModal(true)
+    } catch {
+      alert(t(language, 'upload.ocr.error'))
+    } finally {
+      setIsUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  const handleAddUploadMessages = (selected: { sender: string; text: string }[]) => {
+    const uploadMessages: ChatMessage[] = selected.map((m, i) => ({
+      id: `upload-${Date.now()}-${i}`,
+      role: mapSenderToRole(m.sender, sessionName),
+      text: `[${m.sender}]: ${m.text}`,
+      timestamp: Date.now(),
+    }))
+    onMessagesChange([...messages, ...uploadMessages])
+    setShowUploadModal(false)
+    setOcrMessages([])
   }
 
   return (
@@ -326,7 +392,31 @@ export function ChatInput({ messages, onMessagesChange, isLoading, language, rep
       )}
 
       {/* Add message buttons */}
-      <div className="px-4 py-2 bg-[#202c33] flex gap-2 border-t border-[#313d45]">
+      <div className="px-4 py-2 bg-[#202c33] flex gap-2 border-t border-[#313d45] items-center">
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isUploading}
+          className="p-2 text-[#8696a0] hover:text-white disabled:opacity-50 transition-colors"
+          title={t(language, 'upload.button')}
+        >
+          {isUploading ? (
+            <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+            </svg>
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+          )}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
         <button
           onClick={() => addMessage('her')}
           className="flex-1 py-2 bg-[#2a3942] hover:bg-[#3b4d57] text-[#d1d7db] rounded-lg font-medium transition-colors text-sm"
@@ -340,6 +430,19 @@ export function ChatInput({ messages, onMessagesChange, isLoading, language, rep
           {addMsgLabel(language, gender, 'my')}
         </button>
       </div>
+
+      {/* Upload modal */}
+      {showUploadModal && (
+        <ScreenshotReviewModal
+          messages={ocrMessages}
+          onAdd={handleAddUploadMessages}
+          onClose={() => {
+            setShowUploadModal(false)
+            setOcrMessages([])
+          }}
+          language={language}
+        />
+      )}
     </div>
   )
 }
