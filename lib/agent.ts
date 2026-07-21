@@ -1,4 +1,4 @@
-import { Gender, Language, UserStyle, AgentAnalysis, ReplyOption, ChatMessage } from '@/types'
+import { Gender, Language, UserStyle, AgentAnalysis, ReplyOption, ChatMessage, SocialProfile } from '@/types'
 import { styleToInstructions } from '@/lib/userStyle'
 
 const ANALYSIS_PROMPT_ZH = `你是聊天军师+心理分析师。分析下面的对话，用JSON返回分析结果。
@@ -123,12 +123,18 @@ const GENDER_INSTRUCTIONS: Record<Gender, string> = {
   female: '你是帮女生追男生的聊天搭子。回复要可爱自然，别太主动，要有分寸感。',
 }
 
-export function buildAnalysisPrompt(chatText: string, language: Language, gender: Gender): string {
+export function buildAnalysisPrompt(chatText: string, language: Language, gender: Gender, profile?: SocialProfile): string {
   const prompt = language === 'zh' ? ANALYSIS_PROMPT_ZH : ANALYSIS_PROMPT_EN
   const context = gender === 'male'
     ? '用户是男生，正在和一个女生聊天。分析女生的语气和心理。'
     : '用户是女生，正在和一个男生聊天。分析男生的语气和心理。'
-  return `${prompt}\n\n${context}\n\nChat content:\n${chatText}`
+  let profileBlock = ''
+  if (profile) {
+    profileBlock = language === 'zh'
+      ? `\n\n## 对方个人资料\n昵称：${profile.displayName}\n简介：${profile.bio}\n${profile.recentPosts.length > 0 ? '最近动态：\n- ' + profile.recentPosts.join('\n- ') : ''}\n\n根据这些资料更准确地分析对方的性格和兴趣。`
+      : `\n\n## Their Profile\nDisplay Name: ${profile.displayName}\nBio: ${profile.bio}\n${profile.recentPosts.length > 0 ? 'Recent posts:\n- ' + profile.recentPosts.join('\n- ') : ''}\n\nUse this profile to better understand their personality and interests.`
+  }
+  return `${prompt}${profileBlock}\n\n${context}\n\nChat content:\n${chatText}`
 }
 
 export function buildReplyPrompt(
@@ -138,10 +144,17 @@ export function buildReplyPrompt(
   language: Language,
   userStyle: UserStyle,
   sampleMessages: string[] = [],
-  targetMessages: ChatMessage[] = []
+  targetMessages: ChatMessage[] = [],
+  profile?: SocialProfile
 ): string {
   const genderInst = GENDER_INSTRUCTIONS[gender]
   const styleInstructions = styleToInstructions(userStyle, language, sampleMessages)
+  let profileBlock = ''
+  if (profile) {
+    profileBlock = language === 'zh'
+      ? `\n\n## 对方个人资料（用于个性化回复）\n昵称：${profile.displayName}\n简介：${profile.bio}\n${profile.recentPosts.length > 0 ? '最近动态：\n- ' + profile.recentPosts.join('\n- ') : ''}\n\n根据这些资料，回复要贴合对方的兴趣和个性。`
+      : `\n\n## Their Profile (for personalized replies)\nDisplay Name: ${profile.displayName}\nBio: ${profile.bio}\n${profile.recentPosts.length > 0 ? 'Recent posts:\n- ' + profile.recentPosts.join('\n- ') : ''}\n\nUse this profile context to tailor replies to their personality and interests.`
+  }
   const analysisBlock = `- Tone: ${analysis.tone}
 - Interest level: ${analysis.interestLevel}
 - Emotional state: ${analysis.emotionalState}
@@ -172,6 +185,7 @@ export function buildReplyPrompt(
 ## 角色设定
 你是帮"我"（${imLabel}）回复对方（${otherLabel}）的聊天搭子。
 ${genderInst}
+${profileBlock}
 
 ## 对话历史（仅参考上下文——不要为这些消息生成回复）
 ${contextBlock}
@@ -247,6 +261,7 @@ ${styleInstructions}
 ## Role
 You are a chat wingman helping "me" (${imLabel}) reply to their crush (${otherLabel}).
 ${gender === 'male' ? 'You are a confident, charming guy. You are smooth, witty, and never try too hard.' : 'You are a fun, magnetic girl. You are playful, warm, and know how to keep things exciting.'}
+${profileBlock}
 
 ## Chat history (for context only — DO NOT generate replies for these)
 ${contextBlock}

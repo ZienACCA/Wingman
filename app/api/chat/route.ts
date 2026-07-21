@@ -1,28 +1,29 @@
 import { streamText } from 'ai'
 import { ollama } from 'ai-sdk-ollama'
 import { buildAnalysisPrompt, buildReplyPrompt, parseReplies, parseAnalysis, hasChinese, buildTranslatePrompt } from '@/lib/agent'
-import { Gender, UserStyle, ChatMessage } from '@/types'
+import { Gender, UserStyle, ChatMessage, SocialProfile } from '@/types'
 
 const model = ollama(process.env.OLLAMA_MODEL || 'qwen2.5:7b')
 
 export async function POST(req: Request) {
-  const { chatText, gender, userStyle, sampleMessages, messages } = await req.json() as {
+  const { chatText, gender, userStyle, sampleMessages, messages, profile } = await req.json() as {
     chatText: string
     gender: Gender
     userStyle: UserStyle
     sampleMessages: string[]
     messages: ChatMessage[]
+    profile?: SocialProfile
   }
 
   // Step 1: Analysis (ZH + EN)
-  const analysisPromptZH = buildAnalysisPrompt(chatText, 'zh', gender)
+  const analysisPromptZH = buildAnalysisPrompt(chatText, 'zh', gender, profile)
   const analysisResponseZH = await streamText({ model, prompt: analysisPromptZH })
   let analysisTextZH = ''
   for await (const chunk of analysisResponseZH.textStream) {
     analysisTextZH += chunk
   }
 
-  const analysisPromptEN = buildAnalysisPrompt(chatText, 'en', gender)
+  const analysisPromptEN = buildAnalysisPrompt(chatText, 'en', gender, profile)
   const analysisResponseEN = await streamText({ model, prompt: analysisPromptEN })
   let analysisTextEN = ''
   for await (const chunk of analysisResponseEN.textStream) {
@@ -51,14 +52,14 @@ export async function POST(req: Request) {
   )
 
   // Step 3: Generate replies per-message
-  const replyPromptZH = buildReplyPrompt(chatText, analysisZH, gender, 'zh', userStyle, sampleMessages, targetMessages)
+  const replyPromptZH = buildReplyPrompt(chatText, analysisZH, gender, 'zh', userStyle, sampleMessages, targetMessages, profile)
   const replyResponseZH = await streamText({ model, prompt: replyPromptZH })
   let replyTextZH = ''
   for await (const chunk of replyResponseZH.textStream) {
     replyTextZH += chunk
   }
 
-  const replyPromptEN = buildReplyPrompt(chatText, analysisEN, gender, 'en', userStyle, sampleMessages, targetMessages)
+  const replyPromptEN = buildReplyPrompt(chatText, analysisEN, gender, 'en', userStyle, sampleMessages, targetMessages, profile)
   const replyResponseEN = await streamText({ model, prompt: replyPromptEN })
   let replyTextEN = ''
   for await (const chunk of replyResponseEN.textStream) {

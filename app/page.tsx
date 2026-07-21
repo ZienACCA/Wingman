@@ -188,6 +188,7 @@ export default function Home() {
           userStyle,
           sampleMessages: activeSession.sampleMessages || [],
           messages: activeSession.messages,
+          profile: activeSession.profile,
         }),
       })
 
@@ -236,6 +237,7 @@ export default function Home() {
             userStyle,
             sampleMessages: activeSession.sampleMessages || [],
             messages: activeSession.messages,
+            profile: activeSession.profile,
           }),
         }).then(r => r.json()),
         fetch('/api/regenerate', {
@@ -249,6 +251,7 @@ export default function Home() {
             userStyle,
             sampleMessages: activeSession.sampleMessages || [],
             messages: activeSession.messages,
+            profile: activeSession.profile,
           }),
         }).then(r => r.json()),
       ])
