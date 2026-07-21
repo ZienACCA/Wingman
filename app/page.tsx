@@ -266,15 +266,16 @@ export default function Home() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <SessionList
-        sessions={sessions}
-        activeSessionId={activeSessionId}
-        onSelect={setActiveSessionId}
-        onCreate={handleCreateSession}
-        onRename={handleRenameSession}
-        onDelete={handleDeleteSession}
-        language={language}
-      />
+          <SessionList
+            sessions={sessions}
+            activeSessionId={activeSessionId}
+            onSelect={setActiveSessionId}
+            onCreate={handleCreateSession}
+            onRename={handleRenameSession}
+            onDelete={handleDeleteSession}
+            language={language}
+            activeSession={activeSession}
+          />
 
       <div className="flex-1 flex flex-col bg-[#0b141a]">
         {activeSession ? (
