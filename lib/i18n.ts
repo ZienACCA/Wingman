@@ -1,6 +1,10 @@
 import { Gender, Language } from '@/types'
 
-const translations = {
+type NestedTranslations = {
+  [key: string]: string | NestedTranslations
+}
+
+const translations: Record<Language, NestedTranslations> = {
   zh: {
     title: '撩妹助手',
     subtitle: 'AI 帮你聊天',
@@ -49,6 +53,35 @@ const translations = {
     boundary: '边界',
     style: '风格',
     reply: '回复',
+    upload: {
+      button: '上传截图',
+      drop: '拖放图片到此处',
+      modal: {
+        title: '截图预览',
+        detected: '识别到的消息：',
+        noMessages: '未识别到消息，请尝试其他截图',
+        addAll: '全部添加',
+        cancel: '取消',
+      },
+      ocr: {
+        loading: '正在识别文字...',
+        error: '识别失败，请重试',
+        button: '识别中...',
+      },
+    },
+    profile: {
+      title: '个人资料',
+      urlPlaceholder: '粘贴 Instagram / 小红书链接',
+      fetch: '获取资料',
+      fetching: '获取中...',
+      displayName: '昵称',
+      bio: '简介',
+      recentPosts: '最近动态',
+      postsPlaceholder: '每行一条，可编辑修改',
+      save: '保存',
+      lastFetched: '上次获取：',
+      fetchError: '获取失败，请检查链接后重试',
+    },
   },
   en: {
     title: 'Flirt Wingman',
@@ -98,11 +131,53 @@ const translations = {
     boundary: 'Boundary',
     style: 'Style',
     reply: 'Reply',
+    upload: {
+      button: 'Upload Screenshot',
+      drop: 'Drop image here',
+      modal: {
+        title: 'Screenshot Preview',
+        detected: 'Detected messages:',
+        noMessages: 'No messages detected, try another screenshot',
+        addAll: 'Add All',
+        cancel: 'Cancel',
+      },
+      ocr: {
+        loading: 'Recognizing text...',
+        error: 'Recognition failed, please try again',
+        button: 'Recognizing...',
+      },
+    },
+    profile: {
+      title: 'Profile',
+      urlPlaceholder: 'Paste Instagram / Xiaohongshu link',
+      fetch: 'Fetch Profile',
+      fetching: 'Fetching...',
+      displayName: 'Display Name',
+      bio: 'Bio',
+      recentPosts: 'Recent Posts',
+      postsPlaceholder: 'One per line, editable',
+      save: 'Save',
+      lastFetched: 'Last fetched: ',
+      fetchError: 'Failed to fetch. Check the link and try again.',
+    },
   },
 }
 
-export function t(lang: Language, key: keyof typeof translations.zh): string {
-  return translations[lang][key] || translations.en[key]
+function getNestedValue(obj: NestedTranslations, path: string): string | undefined {
+  const keys = path.split('.')
+  let current: string | NestedTranslations = obj
+  for (const key of keys) {
+    if (typeof current !== 'object' || current === null) return undefined
+    current = (current as NestedTranslations)[key]
+    if (current === undefined) return undefined
+  }
+  return typeof current === 'string' ? current : undefined
+}
+
+export function t(lang: Language, key: string): string {
+  return getNestedValue(translations[lang], key)
+    || getNestedValue(translations.en, key)
+    || key
 }
 
 const ANALYSIS_TRANSLATIONS: Record<Language, Record<string, string>> = {
