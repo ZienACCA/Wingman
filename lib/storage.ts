@@ -1,4 +1,4 @@
-import { Session } from '@/types'
+import { Session, SocialProfile } from '@/types'
 
 const STORAGE_KEY = 'flirt-wingman-sessions'
 
@@ -17,4 +17,23 @@ export function saveConversation(conv: Session): void {
 export function deleteConversation(id: string): void {
   const history = getHistory().filter((c) => c.id !== id)
   localStorage.setItem(STORAGE_KEY, JSON.stringify(history))
+}
+
+export function updateSessionProfile(sessionId: string, profile: SocialProfile): void {
+  const history = getHistory()
+  const idx = history.findIndex((c) => c.id === sessionId)
+  if (idx >= 0) {
+    history[idx] = { ...history[idx], profile, updatedAt: Date.now() }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history))
+  }
+}
+
+export function deleteSessionProfile(sessionId: string): void {
+  const history = getHistory()
+  const idx = history.findIndex((c) => c.id === sessionId)
+  if (idx >= 0) {
+    const { profile, ...rest } = history[idx]
+    history[idx] = { ...rest, updatedAt: Date.now() }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history))
+  }
 }
