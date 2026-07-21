@@ -20,6 +20,16 @@ export interface ChatMessage {
   timestamp: number
   replyToId?: string
   replyToText?: string
+  replyToRole?: 'user' | 'girl'
+}
+
+export interface SocialProfile {
+  platform: 'instagram' | 'xiaohongshu'
+  url: string
+  displayName: string
+  bio: string
+  recentPosts: string[]
+  lastFetched?: number
 }
 
 export interface Session {
@@ -35,6 +45,7 @@ export interface Session {
   sampleMessages: string[]
   createdAt: number
   updatedAt: number
+  profile?: SocialProfile
 }
 
 export interface ReplyOption {
