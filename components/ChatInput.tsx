@@ -33,10 +33,12 @@ export function ChatInput({ messages, onMessagesChange, isLoading, language, rep
   const [swipeStart, setSwipeStart] = useState<{ x: number; messageId: string } | null>(null)
   const [swipeDelta, setSwipeDelta] = useState(0)
   const [showUploadModal, setShowUploadModal] = useState(false)
-  const [ocrMessages, setOcrMessages] = useState<{ sender: string; text: string }[]>([])
+  const [ocrMessages, setOcrMessages] = useState<{ sender: string; text: string; replyTo?: string; replyToRole?: 'user' | 'girl' }[]>([])
   const [isUploading, setIsUploading] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const dropZoneRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -119,7 +121,10 @@ export function ChatInput({ messages, onMessagesChange, isLoading, language, rep
       const res = await fetch('/api/ocr', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64 }),
+        body: JSON.stringify({ 
+          image: base64,
+          previousMessages: messages.map(m => ({ text: m.text, role: m.role }))
+        }),
       })
 
       if (!res.ok) {
@@ -137,13 +142,113 @@ export function ChatInput({ messages, onMessagesChange, isLoading, language, rep
     }
   }
 
-  const handleAddUploadMessages = (selected: { sender: string; text: string }[]) => {
-    const uploadMessages: ChatMessage[] = selected.map((m, i) => ({
-      id: `upload-${Date.now()}-${i}`,
-      role: mapSenderToRole(m.sender, sessionName),
-      text: `[${m.sender}]: ${m.text}`,
-      timestamp: Date.now(),
-    }))
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    // Only set false if we're actually leaving the drop zone (not entering a child)
+    if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) {
+      setIsDragging(false)
+    }
+  }
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    const file = e.dataTransfer.files?.[0]
+    if (!file || !file.type.startsWith('image/')) return
+
+    setIsUploading(true)
+    // Reuse the same upload logic
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          const result = reader.result as string
+          const data = result.split(',')[1]
+          resolve(data)
+        }
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+
+      const res = await fetch('/api/ocr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: base64,
+          previousMessages: messages.map(m => ({ text: m.text, role: m.role }))
+        }),
+      })
+
+      if (!res.ok) {
+        throw new Error('OCR failed')
+      }
+
+      const data = await res.json()
+      setOcrMessages(data.messages || [])
+      setShowUploadModal(true)
+    } catch {
+      alert(t(language, 'upload.ocr.error'))
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const handleAddUploadMessages = (selected: { sender: string; text: string; replyTo?: string; replyToRole?: 'user' | 'girl' }[]) => {
+    const uploadMessages: ChatMessage[] = []
+    const currentMessages = [...messages]
+    
+    for (let i = 0; i < selected.length; i++) {
+      const m = selected[i]
+      const newId = `upload-${Date.now()}-${i}`
+      
+      // Clean text
+      const cleanText = m.text.replace(/^\[.*?\]:\s*/g, '').replace(/^[A-Za-z\u4e00-\u9fff]+:\s*/g, '').trim()
+      
+      // If replyTo is set, link to the original message via quote bar
+      let replyToId: string | undefined
+      let replyToText: string | undefined
+      let replyToRole: 'user' | 'girl' | undefined
+      
+      if (m.replyTo) {
+        replyToText = m.replyTo  // Always use the quoted text
+        
+        // Convert OCR role to ChatMessage role
+        if (m.replyToRole) {
+          replyToRole = mapSenderToRole(m.replyToRole, sessionName)
+        }
+        
+        // Try to find the exact message to link by ID
+        const targetMsg = [...currentMessages].reverse().find(msg => 
+          msg.text === m.replyTo || m.replyTo?.includes(msg.text) || msg.text.includes(m.replyTo || '')
+        )
+        if (targetMsg) {
+          replyToId = targetMsg.id
+          if (!replyToRole) {
+            replyToRole = targetMsg.role
+          }
+        }
+      }
+      
+      const newMsg: ChatMessage = {
+        id: newId,
+        role: mapSenderToRole(m.sender, sessionName),
+        text: cleanText,
+        timestamp: Date.now(),
+        ...(replyToId ? { replyToId, replyToText, replyToRole } : {}),
+      }
+      uploadMessages.push(newMsg)
+      currentMessages.push(newMsg)
+    }
+    
     onMessagesChange([...messages, ...uploadMessages])
     setShowUploadModal(false)
     setOcrMessages([])
@@ -152,7 +257,21 @@ export function ChatInput({ messages, onMessagesChange, isLoading, language, rep
   return (
     <div className="flex flex-col h-full">
       {/* Chat messages area */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1">
+      <div
+        ref={dropZoneRef}
+        className="flex-1 overflow-y-auto px-4 py-3 space-y-1 relative"
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        {/* Drop zone overlay */}
+        {isDragging && (
+          <div className="absolute inset-0 z-40 bg-[#00a884]/10 border-2 border-dashed border-[#00a884] rounded-lg flex items-center justify-center">
+            <div className="text-[#00a884] text-lg font-medium">
+              {t(language, 'upload.drop')}
+            </div>
+          </div>
+        )}
         {messages.length === 0 && !analysis && (
           <div className="flex items-center justify-center h-full">
             <p className="text-[#8696a0] text-sm">{t(language, 'emptyChat')}</p>
@@ -257,9 +376,11 @@ export function ChatInput({ messages, onMessagesChange, isLoading, language, rep
                     {msg.replyToText && (
                       <div className="border-l-2 border-[#00a884] pl-2 mb-1">
                         <div className="text-[#8696a0] text-xs">
-                          {msg.role === 'girl'
-                            ? (gender === 'male' ? '她' : '他')
-                            : (gender === 'male' ? '我' : '我')}
+                          {msg.replyToRole === 'girl'
+                            ? (language === 'en'
+                              ? (gender === 'male' ? 'She' : 'He')
+                              : (gender === 'male' ? '她' : '他'))
+                            : t(language, 'myLabel')}
                           : {msg.replyToText}
                         </div>
                       </div>

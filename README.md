@@ -1,88 +1,212 @@
-# Flirt Wingman 撩妹助手
+# Wingman
 
-WhatsApp 风格的 AI 聊天助手，帮你分析对话上下文，生成高情商回复选项。
+> Your crush texts "k". You panic. Wingman analyzes the vibe, reads between the lines, and generates replies that actually work. Supports male & female perspectives, Chinese & English, and runs 100% offline. No cloud, no data leaks, no cringe. Just better conversations.
 
-## 功能
+[中文文档](README_CN.md)
 
-- **多会话管理** — 同时和多人聊天，左侧边栏切换
-- **AI 对话分析** — 自动分析语气、兴趣度、情绪状态、关系阶段、潜台词
-- **智能回复生成** — 为每条未回复消息生成 2-3 个回复选项
-- **回复引用** — 支持右键菜单、悬浮图标、右滑三种方式引用特定消息
-- **引用气泡** — 已发送消息显示引用的原始消息
-- **性别切换** — 支持男生/女生视角，AI 会调整风格
-- **中英文切换** — 每个会话独立语言设置
-- **用户风格检测** — 自动分析你的打字风格，AI 模仿你的语气
-- **本地运行** — 使用 Ollama + Qwen 2.5 7B，完全离线
+## What is Wingman?
 
-## 前置要求
+Wingman is a WhatsApp-style AI chat assistant that helps you craft better replies. It analyzes your conversation context, detects emotional tone and relationship dynamics, then generates natural, context-aware response options — all running locally on your machine.
 
-1. 安装 [Ollama](https://ollama.ai)
-2. 下载 Qwen 模型：
+**Key principles:**
+- 🔒 **Privacy-first** — Everything runs locally via Ollama. Your conversations never leave your device.
+- 🎯 **Context-aware** — AI understands tone, interest level, emotional state, and relationship stage.
+- 💬 **Multi-session** — Chat with multiple people simultaneously, each with its own analysis.
+- 🌍 **Bilingual** — Full Chinese and English support with per-session language settings.
+
+## Demo
+
+![Wingman Demo](screenshots/demo.png)
+
+> 📸 **Want to see it in action?** The screenshot above shows Wingman analyzing a conversation and generating contextual replies.
+
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| **AI Analysis** | Automatically detects tone, interest level, emotional state, relationship stage, and subtext |
+| **Smart Replies** | Generates 2-3 context-aware replies per unreplied message |
+| **Reply-to-Message** | Quote specific messages via right-click, hover icon, or swipe |
+| **Multi-session** | Manage multiple conversations with separate analysis |
+| **Gender Toggle** | Switch between male/female perspective, AI adjusts accordingly |
+| **User Style Detection** | Analyzes your typing patterns, AI mimics your voice |
+| **Chinese & English** | Full bilingual support with per-session language settings |
+| **Social Profile** | Fetch Instagram profile info to personalize AI responses — analyzes bio for communication style, interests, and personality |
+
+## 🆕 New Features
+
+### Social Profile Context
+
+Fetch public Instagram profile data to give the AI context about who you're chatting with:
+
+| Feature | Description |
+|---------|-------------|
+| **One-click Fetch** | Paste an Instagram URL → automatically extracts display name and bio |
+| **Auto Analysis** | Saves profile → AI analyzes bio for communication style, interests, and personality traits |
+| **Per-session** | Each session has its own profile, isolated from others |
+| **Ego lite** | Uses your real logged-in browser session for reliable Instagram access |
+| **Editable** | Name and bio can be manually edited before saving |
+
+Profile data is injected into AI prompts, helping Wingman tailor replies to the person's vibe and communication style.
+
+### Screenshot Upload & Recognition
+
+Upload WhatsApp chat screenshots to automatically extract and recognize message content:
+
+| Feature | Description |
+|---------|-------------|
+| **One-click Upload** | Click the camera icon next to the input box to upload screenshots |
+| **OCR Recognition** | Uses PaddleOCR to accurately extract Chinese and English text |
+| **Smart Segmentation** | Automatically segments long screenshots to ensure complete extraction |
+| **Margin Padding** | Adds margin processing to recognize edge text |
+| **Sender Detection** | Automatically determines sender based on message position (left/right) |
+| **Reply Linking** | Automatically detects reply patterns ("You replied to…" / "[Name] replied to you") — matches quoted text to original messages and adds reply quote bars |
+| **Previous Chat Matching** | Matches quoted text against your existing chat history for accurate reply linking |
+| **Batch Confirmation** | Preview all recognized results in a popup, selectively add messages |
+| **Bilingual Support** | Supports both Chinese and English chat screenshots |
+
+**How to use:**
+1. Click the 📷 camera icon next to the input box
+2. Select a WhatsApp chat screenshot
+3. Wait for OCR recognition (~30 seconds)
+4. Preview recognized results, select messages to add
+5. Click "Add Selected" or "Add All"
+
+## Quick Start
+
 ```bash
-ollama pull qwen2.5:7b
+git clone https://github.com/ZienACCA/Wingman.git
+cd Wingman
+./setup.sh
 ```
 
-## 安装
+One command does everything: installs Ollama, installs PaddleOCR, downloads the model, starts the app, and opens the browser.
+
+### What the setup script does:
+
+1. ✅ Checks for Python3, pip3, and Ollama (installs Ollama if missing)
+2. ✅ Starts the Ollama server
+3. ✅ Downloads Qwen 2.5 7B model (~4.7GB)
+4. ✅ Installs PaddleOCR Python dependencies (for screenshot recognition)
+5. ✅ Installs npm dependencies
+6. ✅ Opens http://localhost:3000
+
+## Manual Install
 
 ```bash
-git clone https://github.com/yourusername/flirt-wingman.git
-cd flirt-wingman
+git clone https://github.com/ZienACCA/Wingman.git
+cd Wingman
 npm install
 npm run dev
 ```
 
-访问 http://localhost:3000
+### Prerequisites
 
-## 使用方法
+- [Node.js](https://nodejs.org/) 18+
+- [Ollama](https://ollama.ai) installed and running
+- [Python3](https://python.org) + PaddleOCR (for screenshot recognition)
+- [ego lite](https://ego.app) — browser automation for Instagram profile fetching (optional but recommended)
 
-1. 确保 Ollama 正在运行（`ollama serve`）
-2. 创建新会话
-3. 点击「+ 她的消息」添加对方消息
-4. 点击「+ 我的消息」添加你的消息
-5. 点击「分析对话并生成回复」
-6. 选择喜欢的回复，或手动输入
+```bash
+pip install paddlepaddle paddleocr
+```
 
-### 回复引用
+## How It Works
 
-- **悬浮图标** — 鼠标悬停在消息上，点击回复箭头
-- **右键菜单** — 右键点击消息，选择「回复」
-- **右滑** — 在消息上向右滑动（触屏设备）
+### 1. Add Messages
 
-### 回复 AI 选项
+Paste or type your chat conversation. Add messages from both sides:
+- **Her messages** — What the other person said
+- **My messages** — What you said (or want to say)
 
-AI 为每条未回复的消息生成单独的回复选项，显示在输入框上方。点击即可使用。
+### 2. Analyze
 
-## 技术栈
+Click "Analyze & Generate Replies". Wingman will:
+- Parse the conversation flow
+- Detect emotional tone and interest level
+- Identify relationship stage
+- Generate context-aware reply options
 
-- Next.js 16
-- React
-- Tailwind CSS v4
-- TypeScript
-- Ollama (本地 LLM)
-- Qwen 2.5 7B
+### 3. Reply
 
-## 项目结构
+Choose from AI-generated options or type your own. Each unreplied message gets its own set of suggestions.
+
+### Screenshot Upload
+
+1. Click the 📷 camera icon next to the input box, **or** drag & drop an image directly onto the chat area
+2. Select a WhatsApp chat screenshot
+3. Wait for OCR recognition (~30 seconds)
+4. Preview recognized results, select messages to add
+5. Click "Add Selected" or "Add All"
+
+### Reply-to-Message
+
+Quote specific messages in your reply:
+- **Hover** — Click the reply icon that appears on hover
+- **Right-click** — Select "Reply" from the context menu
+- **Swipe** — Drag right on touch devices
+
+## Architecture
 
 ```
-flirt-wingman/
+wingman/
 ├── app/
 │   ├── api/
-│   │   ├── chat/route.ts       # AI 分析 + 回复生成
-│   │   └── regenerate/route.ts # 重新生成回复
-│   └── page.tsx                # 主页面
+│   │   ├── chat/route.ts          # AI analysis + reply generation
+│   │   ├── ocr/route.ts           # Screenshot OCR recognition
+│   │   ├── profile/
+│   │   │   ├── analyze/route.ts   # Profile analysis (Qwen-based)
+│   │   │   └── fetch/route.ts     # Instagram profile fetching
+│   │   └── regenerate/route.ts    # Regenerate replies
+│   └── page.tsx                   # Main page
 ├── components/
-│   ├── ChatInput.tsx           # 聊天输入 + 消息显示
-│   ├── LanguageSwitch.tsx      # 语言切换
-│   └── SessionList.tsx         # 会话列表
+│   ├── ChatInput.tsx              # Chat UI with reply support
+│   ├── LanguageSwitch.tsx         # Language toggle
+│   ├── ScreenshotReviewModal.tsx  # Screenshot preview modal
+│   ├── SessionList.tsx            # Session sidebar
+│   └── SocialProfilePanel.tsx     # Profile fetch + analysis UI
 ├── lib/
-│   ├── agent.ts                # AI prompt 构建 + 解析
-│   ├── i18n.ts                 # 国际化翻译
-│   ├── storage.ts              # localStorage 持久化
-│   └── userStyle.ts            # 用户风格检测
+│   ├── agent.ts                   # AI prompt engineering + parsing
+│   ├── ego-browser.ts             # ego lite CLI integration
+│   ├── i18n.ts                    # Internationalization
+│   ├── storage.ts                 # LocalStorage persistence
+│   └── userStyle.ts               # User typing style detection
+├── scripts/
+│   └── ocr.py                     # PaddleOCR text extraction
+├── setup.sh                       # One-click setup script
 └── types/
-    └── index.ts                # TypeScript 类型定义
+    └── index.ts                   # TypeScript definitions
 ```
 
-## 许可证
+## Tech Stack
 
-MIT
+| Technology | Purpose |
+|------------|---------|
+| [Next.js 16](https://nextjs.org/) | React framework + API routes |
+| [Tailwind CSS v4](https://tailwindcss.com/) | WhatsApp-style dark theme |
+| [Ollama](https://ollama.ai) | Local LLM runtime |
+| [Qwen 2.5 7B](https://ollama.ai/library/qwen2.5) | Language model for analysis + replies |
+| [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) | Screenshot text recognition |
+| [ego lite](https://ego.app) | Browser automation for Instagram profile fetch |
+| TypeScript | Type safety |
+
+## AI Prompts
+
+Wingman uses carefully engineered prompts that:
+- Split chat into "context" vs "needs reply" sections
+- Use numbered message IDs for precise reply mapping
+- Include user's detected typing style
+- Enforce role clarity (who is replying to whom)
+- Prevent common AI mistakes (role reversal, mixing up messages)
+
+See `lib/agent.ts` for the full prompt engineering.
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+<p align="center">
+  Made with ❤️ for better conversations
+</p>

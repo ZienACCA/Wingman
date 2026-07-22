@@ -1,9 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Session, SocialProfile, Language } from '@/types'
-import { SocialProfilePanel } from './SocialProfilePanel'
-import { updateSessionProfile, deleteSessionProfile } from '@/lib/storage'
+import { Session, Language } from '@/types'
 import { t } from '@/lib/i18n'
 
 interface SessionListProps {
@@ -14,7 +12,6 @@ interface SessionListProps {
   onRename: (id: string, name: string) => void
   onDelete: (id: string) => void
   language: Language
-  activeSession?: Session
 }
 
 export function SessionList({
@@ -25,7 +22,6 @@ export function SessionList({
   onRename,
   onDelete,
   language,
-  activeSession,
 }: SessionListProps) {
   const [isCreating, setIsCreating] = useState(false)
   const [newName, setNewName] = useState('')
@@ -178,15 +174,6 @@ export function SessionList({
           )
         })}
       </div>
-
-      {activeSession && (
-        <SocialProfilePanel
-          profile={activeSession.profile}
-          language={language}
-          onSave={(profile) => updateSessionProfile(activeSession.id, profile)}
-          onDelete={() => deleteSessionProfile(activeSession.id)}
-        />
-      )}
     </div>
   )
 }

@@ -4,8 +4,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { SessionList } from '@/components/SessionList'
 import { ChatInput } from '@/components/ChatInput'
 import { LanguageSwitch } from '@/components/LanguageSwitch'
-import { Session, Gender, ChatMessage, Language, AgentAnalysis, UserStyle } from '@/types'
+import { Session, Gender, ChatMessage, Language, AgentAnalysis, UserStyle, SocialProfile } from '@/types'
 import { t, translateAnalysis } from '@/lib/i18n'
+import { SocialProfilePanel } from '@/components/SocialProfilePanel'
+import { updateSessionProfile, deleteSessionProfile } from '@/lib/storage'
 import { loadUserStyle, saveUserStyle, analyzeUserStyle } from '@/lib/userStyle'
 
 const STORAGE_KEY = 'flirt-wingman-sessions'
@@ -269,7 +271,7 @@ export default function Home() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-          <SessionList
+      <SessionList
             sessions={sessions}
             activeSessionId={activeSessionId}
             onSelect={setActiveSessionId}
@@ -277,7 +279,6 @@ export default function Home() {
             onRename={handleRenameSession}
             onDelete={handleDeleteSession}
             language={language}
-            activeSession={activeSession}
           />
 
       <div className="flex-1 flex flex-col bg-[#0b141a]">
@@ -292,9 +293,20 @@ export default function Home() {
                   <h3 className="text-white font-medium">
                     {activeSession.name || t(language, 'newSession')}
                   </h3>
-                  <p className="text-[#8696a0] text-xs">
-                    {activeSession.gender === 'male' ? t(language, 'genderMale') : t(language, 'genderFemale')}
-                  </p>
+                  <SocialProfilePanel
+                    key={activeSession.id}
+                    profile={activeSession.profile}
+                    language={language}
+                    onSave={(profile) => {
+                      updateSessionProfile(activeSession.id, profile)
+                      if (profile.displayName) {
+                        updateSession(activeSession.id, { name: profile.displayName })
+                      }
+                    }}
+                    onDelete={() => deleteSessionProfile(activeSession.id)}
+                    noBorder
+                    compact
+                  />
                 </div>
               </div>
 
